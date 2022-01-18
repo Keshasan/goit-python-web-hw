@@ -1,6 +1,7 @@
 import sys
 from src.Asisstant import Asisstant
 from src.Sorter import Sorter
+from src.Interface import Terminal
 
 
 def main():
@@ -40,9 +41,13 @@ def main():
         "delete note": jarvis.delete_note,
         "add tags": jarvis.add_tags,
     }
-    commands = sys.argv[1:]
+
+    interface = Terminal()
+
+    commands = interface.get_command()[1:]
     str_cmd = " ".join(commands)
-    if len(sys.argv) == 1:
+
+    if len(interface.get_command()) == 1:
         print(
             f'Hello my name is "Jarvis" i am your virtual assistant.\nI support these commands:\n  {"  ".join(commands_list)}'
         )
