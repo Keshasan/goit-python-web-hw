@@ -1,7 +1,7 @@
 from os import terminal_size
 
-from AdressBook import *
-from NoteBook import *
+from src.AdressBook import *
+from src.NoteBook import *
 
 
 class Asisstant:

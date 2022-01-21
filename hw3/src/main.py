@@ -1,6 +1,6 @@
 import sys
-from Asisstant import Asisstant
-from Sorter import Sorter
+from src.Asisstant import Asisstant
+from src.Sorter import Sorter
 
 
 def main():
