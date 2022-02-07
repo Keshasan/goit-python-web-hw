@@ -1,6 +1,4 @@
-from multiprocessing import Process
 import os
-
 import time
 from multiprocessing import Pool
 
@@ -25,8 +23,8 @@ def factorize(*numbers) -> list:
 
 
 def pool_proc_factorize(*numbers):
-    with Pool(processes=len(numbers)) as pool:
-        return pool.map(find_dividers, numbers)
+    pool = Pool(processes=4)
+    return pool.map(find_dividers, numbers)
 
 
 if __name__ == '__main__':
