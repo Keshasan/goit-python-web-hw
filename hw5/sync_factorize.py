@@ -1,24 +1,27 @@
 import time
-import multiprocessing
 
 
-def factorize(*numbers) -> list:
-    start_time = time.time()
+def find_dividers(number: int) -> list:
     result = []
-
-    for number in numbers:
-        counters = []
-
-        for counter in range(1, number+1):
-            if number % counter == 0:
-                counters.append(counter)
-        result.append(counters)
-
-    print('Sync version done in {:.4f} seconds'.format(time.time()-start_time))
+    for counter in range(1, number+1):
+        if number % counter == 0:
+            result.append(counter)
     return result
 
 
+def factorize(*numbers) -> list:
+
+    result = []
+    for number in numbers:
+        counters = find_dividers(number)
+        result.append(counters)
+
+    return result
+
+
+start_time = time.time()
 a, b, c, d = factorize(128, 255, 99999, 10651060)
+print('Sync version done in {:.4f} seconds'.format(time.time()-start_time))
 
 assert a == [1, 2, 4, 8, 16, 32, 64, 128]
 assert b == [1, 3, 5, 15, 17, 51, 85, 255]
