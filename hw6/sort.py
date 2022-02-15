@@ -6,6 +6,7 @@ import re
 import time
 import asyncio
 import aioshutil
+from aiopath import AsyncPath
 
 SORTING_DICT = {
     'archives': ('ZIP', 'GZ', 'TAR'),
@@ -34,8 +35,8 @@ async def recursive_sort_directory(path: Path, main_dir: Path):
     '''
          Recursive sort directory
     '''
-    if path.is_dir() and path.name not in SORTING_DICT.keys():
-        for element in path.iterdir():
+    if await path.is_dir() and path.name not in SORTING_DICT.keys():
+        async for element in path.iterdir():
 
             await recursive_sort_directory(element, main_dir)
 
@@ -116,15 +117,15 @@ async def clean_folder_func():
         print('Too much arguments.')
         sys.exit()
 
-    folder_path = Path(folder_path)
-    main_dir = folder_path
-    if not folder_path.exists():
+    folder_path = AsyncPath(folder_path)
+    main_dir = Path(folder_path)
+    if not await folder_path.exists():
         print("Invalid path to folder. Restart script with correct 'path'.")
         sys.exit()
 
     await recursive_sort_directory(folder_path, main_dir)
-    await remove_empty_folders(folder_path)
-    await unpack_archives(folder_path)
+    await remove_empty_folders(main_dir)
+    await unpack_archives(main_dir)
 
 
 if __name__ == '__main__':
