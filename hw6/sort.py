@@ -4,13 +4,15 @@ import shutil
 import os
 import re
 import time
+import asyncio
+
 
 SORTING_DICT = {
     'archives': ('ZIP', 'GZ', 'TAR'),
     'video': ('AVI', 'MP4', 'MOV', 'MKV'),
     'audio': ('MP3', 'OGG', 'WAV', 'AMR'),
     'documents': ('DOC', 'DOCX', 'TXT', 'PDF', 'XLSX', 'PPTX'),
-    'images': ('JPEG', 'PNG', 'JPG', 'SVG'),
+    'images': ('JPEG', 'PNG', 'JPG', 'JFIF', 'SVG'),
 }
 
 TABLE_SYMBOLS = ('абвгґдеєжзиіїйклмнопрстуфхцчшщюяыэАБВГҐДЕЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЮЯЫЭьъЬЪ',
@@ -28,33 +30,18 @@ TABLE_SYMBOLS = ('абвгґдеєжзиіїйклмнопрстуфхцчшщю
                  )
 
 
-def recursive_sort_directory(path: Path, main_dir: Path):
+async def recursive_sort_directory(path: Path, main_dir: Path):
     '''
          Recursive sort directory
     '''
     if path.is_dir() and path.name not in SORTING_DICT.keys():
         for element in path.iterdir():
-            recursive_sort_directory(element, main_dir)
+
+            await recursive_sort_directory(element, main_dir)
 
     else:
-        file_extension = path.name.split('.')[1]
-        file_name = path.name.split('.')[0]
 
-        for folder, extension in SORTING_DICT.items():
-            if file_extension.upper() in extension:
-                if main_dir.joinpath(folder).exists():
-                    shutil.move(
-                        path.as_posix(),
-                        main_dir.joinpath(folder).joinpath(
-                            normalize(file_name)+'.'+file_extension)
-                    )
-                else:
-                    os.mkdir(main_dir.joinpath(folder))
-                    shutil.move(
-                        path.as_posix(),
-                        main_dir.joinpath(folder).joinpath(
-                            normalize(file_name)+'.'+file_extension)
-                    )
+        sort_file(path, main_dir)
 
 
 def normalize(name: str):
@@ -64,6 +51,27 @@ def normalize(name: str):
     map_cyr_to_latin = {ord(src): dest for src, dest in zip(*TABLE_SYMBOLS)}
     rx = re.compile(r"[^\w_]")
     return rx.sub('_', name.translate(map_cyr_to_latin))
+
+
+def sort_file(path: Path, main_dir: Path):
+    file_extension = path.name.split('.')[1]
+    file_name = path.name.split('.')[0]
+
+    for folder, extension in SORTING_DICT.items():
+        if file_extension.upper() in extension:
+            if main_dir.joinpath(folder).exists():
+                shutil.move(
+                    path.as_posix(),
+                    main_dir.joinpath(folder).joinpath(
+                        normalize(file_name)+'.'+file_extension)
+                )
+            else:
+                os.mkdir(main_dir.joinpath(folder))
+                shutil.move(
+                    path.as_posix(),
+                    main_dir.joinpath(folder).joinpath(
+                        normalize(file_name)+'.'+file_extension)
+                )
 
 
 def remove_empty_folders(path: Path):
@@ -100,9 +108,7 @@ def unpack_archives(path: Path):
         archive.unlink()
 
 
-if __name__ == '__main__':
-    start_time = time.time()
-
+async def clean_folder_func():
     folder_path = sys.argv[1]
 
     if len(sys.argv) > 2:
@@ -115,8 +121,12 @@ if __name__ == '__main__':
         print("Invalid path to folder. Restart script with correct 'path'.")
         sys.exit()
 
-    recursive_sort_directory(folder_path, main_dir)
+    await recursive_sort_directory(folder_path, main_dir)
     remove_empty_folders(folder_path)
     unpack_archives(folder_path)
 
+
+if __name__ == '__main__':
+    start_time = time.time()
+    asyncio.run(clean_folder_func())
     print('Function done in {:.4f} seconds'.format(time.time()-start_time))
