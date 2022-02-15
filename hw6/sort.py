@@ -5,7 +5,7 @@ import os
 import re
 import time
 import asyncio
-
+import aioshutil
 
 SORTING_DICT = {
     'archives': ('ZIP', 'GZ', 'TAR'),
@@ -46,7 +46,7 @@ async def recursive_sort_directory(path: Path, main_dir: Path):
 
 def normalize(name: str):
     '''
-        Transliterate cyrrylic symbols to latin 
+        Transliterate cyrrylic symbols to latin
     '''
     map_cyr_to_latin = {ord(src): dest for src, dest in zip(*TABLE_SYMBOLS)}
     rx = re.compile(r"[^\w_]")
@@ -74,7 +74,7 @@ def sort_file(path: Path, main_dir: Path):
                 )
 
 
-def remove_empty_folders(path: Path):
+async def remove_empty_folders(path: Path):
     '''
         Recursively removes empty folders + renames folders using 'normalize function'
     '''
@@ -87,15 +87,15 @@ def remove_empty_folders(path: Path):
                     element.parent.joinpath(normalize(element.name))
                 )
                 element = element.parent.joinpath(normalize(element.name))
-                remove_empty_folders(element)
+                await remove_empty_folders(element)
 
         if not list(path.iterdir()):
             shutil.rmtree(path)
 
 
-def unpack_archives(path: Path):
+async def unpack_archives(path: Path):
     '''
-        Checks if folder "archives" exists, then unpack archive + removes it 
+        Checks if folder "archives" exists, then unpack archive + removes it
     '''
     archives_folder = path.joinpath('archives')
 
@@ -104,7 +104,8 @@ def unpack_archives(path: Path):
 
     for archive in archives_folder.iterdir():
         destination = archive.parent.joinpath(archive.name.split('.')[0])
-        shutil.unpack_archive(archive, destination)
+        await aioshutil.unpack_archive(archive, destination)
+
         archive.unlink()
 
 
@@ -122,8 +123,8 @@ async def clean_folder_func():
         sys.exit()
 
     await recursive_sort_directory(folder_path, main_dir)
-    remove_empty_folders(folder_path)
-    unpack_archives(folder_path)
+    await remove_empty_folders(folder_path)
+    await unpack_archives(folder_path)
 
 
 if __name__ == '__main__':
