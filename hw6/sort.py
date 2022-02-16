@@ -1,6 +1,4 @@
 import sys
-from pathlib import Path
-import shutil
 import os
 import re
 import time
@@ -31,7 +29,7 @@ TABLE_SYMBOLS = ('абвгґдеєжзиіїйклмнопрстуфхцчшщю
                  )
 
 
-async def recursive_sort_directory(path: Path, main_dir: Path):
+async def recursive_sort_directory(path: AsyncPath, main_dir: AsyncPath):
     '''
          Recursive sort directory
     '''
@@ -42,7 +40,7 @@ async def recursive_sort_directory(path: Path, main_dir: Path):
 
     else:
 
-        sort_file(path, main_dir)
+        await sort_file(path, main_dir)
 
 
 def normalize(name: str):
@@ -54,60 +52,58 @@ def normalize(name: str):
     return rx.sub('_', name.translate(map_cyr_to_latin))
 
 
-def sort_file(path: Path, main_dir: Path):
+async def sort_file(path: AsyncPath, main_dir: AsyncPath):
     file_extension = path.name.split('.')[1]
     file_name = path.name.split('.')[0]
 
     for folder, extension in SORTING_DICT.items():
         if file_extension.upper() in extension:
-            if main_dir.joinpath(folder).exists():
-                shutil.move(
+            # main_dir.joinpath(folder).exists():
+            if await AsyncPath(os.path.join(main_dir, folder)).exists():
+                await aioshutil.move(
                     path.as_posix(),
-                    main_dir.joinpath(folder).joinpath(
-                        normalize(file_name)+'.'+file_extension)
-                )
+                    os.path.join(main_dir, folder, normalize(file_name))+'.'+file_extension)
+
             else:
                 os.mkdir(main_dir.joinpath(folder))
-                shutil.move(
+                await aioshutil.move(
                     path.as_posix(),
-                    main_dir.joinpath(folder).joinpath(
-                        normalize(file_name)+'.'+file_extension)
-                )
+                    os.path.join(main_dir, folder, normalize(file_name))+'.'+file_extension)
 
 
-async def remove_empty_folders(path: Path):
+async def remove_empty_folders(path: AsyncPath):
     '''
         Recursively removes empty folders + renames folders using 'normalize function'
     '''
-    if path.is_dir() and path.name not in SORTING_DICT.keys():
+    if await path.is_dir() and path.name not in SORTING_DICT.keys():
 
-        for element in path.iterdir():
-            if element.is_dir():
-                shutil.move(
+        async for element in path.iterdir():
+            if await element.is_dir():
+                await aioshutil.move(
                     element,
                     element.parent.joinpath(normalize(element.name))
                 )
                 element = element.parent.joinpath(normalize(element.name))
                 await remove_empty_folders(element)
 
-        if not list(path.iterdir()):
-            shutil.rmtree(path)
+        if not path.iterdir():
+            await aioshutil.rmtree(path)
 
 
-async def unpack_archives(path: Path):
+async def unpack_archives(path: AsyncPath):
     '''
         Checks if folder "archives" exists, then unpack archive + removes it
     '''
     archives_folder = path.joinpath('archives')
 
-    if not archives_folder.exists():
+    if not await archives_folder.exists():
         return
 
-    for archive in archives_folder.iterdir():
+    async for archive in archives_folder.iterdir():
         destination = archive.parent.joinpath(archive.name.split('.')[0])
         await aioshutil.unpack_archive(archive, destination)
 
-        archive.unlink()
+        await archive.unlink()
 
 
 async def clean_folder_func():
@@ -118,7 +114,7 @@ async def clean_folder_func():
         sys.exit()
 
     folder_path = AsyncPath(folder_path)
-    main_dir = Path(folder_path)
+    main_dir = folder_path
     if not await folder_path.exists():
         print("Invalid path to folder. Restart script with correct 'path'.")
         sys.exit()
