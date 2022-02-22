@@ -16,4 +16,4 @@ def get_message(host, port):
 
 if __name__ == '__main__':
 
-    get_message('', 53210)
+    get_message('', 5321)

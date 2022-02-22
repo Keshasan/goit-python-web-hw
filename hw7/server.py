@@ -62,4 +62,4 @@ def write_response(client_sock, response, client_id):
 
 
 if __name__ == '__main__':
-    run_server(port=53210)
+    run_server(port=5321)
